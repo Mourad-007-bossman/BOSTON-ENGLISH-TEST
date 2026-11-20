@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boston English Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui'] } } } };
+        (function applyInitialTheme() {
+            let useDark = false;
+            try { if (window.parent && window.parent !== window) useDark = window.parent.document.documentElement.classList.contains('dark'); } catch (e) {}
+            if (!useDark) {
+                const saved = localStorage.getItem('theme-preference');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                useDark = saved ? saved === 'dark' : prefersDark;
+            }
+            document.documentElement.classList.toggle('dark', useDark);
+        })();
+        window.setTheme = function setTheme(theme) {
+            const useDark = theme === 'dark';
+            document.documentElement.classList.toggle('dark', useDark);
+            localStorage.setItem('theme-preference', useDark ? 'dark' : 'light');
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body class="h-full overflow-x-hidden">
+<div class="isolate relative min-h-[100dvh] overflow-x-hidden overflow-y-auto bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50">
+    <div class="pointer-events-none fixed inset-0 z-0">
+        <div class="absolute -top-28 -left-28 h-80 w-80 rounded-full bg-indigo-500/15 blur-3xl dark:bg-indigo-500/25"></div>
+        <div class="absolute -bottom-36 -right-28 h-96 w-96 rounded-full bg-amber-500/10 blur-3xl dark:bg-amber-500/20"></div>
+    </div>
+
+    <div class="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[800px] flex-col items-center justify-center gap-8 px-6 py-12">
+        <div class="header-section -translate-y-5 text-center opacity-0">
+            <span class="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.3em] text-indigo-500 dark:border-indigo-800/50 dark:bg-indigo-900/30 dark:text-indigo-400">
+                SLIDE 04 — DISCUSSION
+            </span>
+            <h1 class="mt-5 mb-2 text-3xl font-black tracking-tight text-slate-900 sm:text-5xl dark:text-slate-100">Restaurant Complaints</h1>
+        </div>
+
+        <div class="card-wrap relative w-full opacity-0" style="min-height: 240px;">
+            <div id="q-card" class="flex min-h-[220px] flex-col items-center justify-center rounded-[2rem] border border-slate-200 bg-white p-8 text-center shadow-xl sm:p-12 dark:border-slate-700 dark:bg-slate-800">
+                <span id="q-icon" class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 dark:bg-indigo-900/30 dark:text-indigo-400"></span>
+                <p id="q-text" class="text-xl font-black leading-snug text-slate-800 sm:text-2xl dark:text-slate-100"></p>
+            </div>
+        </div>
+
+        <div class="nav-row flex items-center gap-6 opacity-0">
+            <button id="prev-btn" class="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:text-indigo-600 disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="flex items-center gap-2" id="dots"></div>
+            <button id="next-btn" class="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:text-indigo-600 disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ICONS = {
+        plate: '<svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>',
+        snowflake: '<svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v16M8 5.07l8 13.86M16 5.07l-8 13.86"/></svg>',
+        question: '<svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7v.3"/><path d="M12 17h.01"/></svg>',
+        smile: '<svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14c1.2 1.3 2.6 2 4 2s2.8-.7 4-2"/><circle cx="9" cy="10" r=".75" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r=".75" fill="currentColor" stroke="none"/></svg>',
+        chat: '<svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="12" rx="2.5"/><path d="M9 16 7 20 12 16Z" fill="currentColor" stroke="none"/></svg>',
+    };
+
+    const QUESTIONS = [
+        { icon: ICONS.plate, text: 'What problems can people have in restaurants?' },
+        { icon: ICONS.snowflake, text: 'Have you ever received cold or bad food in a restaurant?' },
+        { icon: ICONS.question, text: 'What do you usually do when there is a problem with your order?' },
+        { icon: ICONS.smile, text: 'Is it important for waiters to be polite? Why?' },
+        { icon: ICONS.chat, text: 'How should restaurants respond to customer complaints?' },
+    ];
+
+    let current = 0;
+    const qIcon = document.getElementById('q-icon');
+    const qText = document.getElementById('q-text');
+    const qCard = document.getElementById('q-card');
+    const dotsWrap = document.getElementById('dots');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    QUESTIONS.forEach((_, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'dot h-2.5 w-2.5 rounded-full bg-slate-300 transition-all dark:bg-slate-600';
+        dot.addEventListener('click', () => render(i));
+        dotsWrap.appendChild(dot);
+    });
+
+    function render(i) {
+        current = i;
+        const q = QUESTIONS[i];
+        if (window.gsap) {
+            gsap.fromTo(qCard, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' });
+        }
+        qIcon.innerHTML = q.icon;
+        qText.textContent = q.text;
+        [...dotsWrap.children].forEach((d, idx) => {
+            d.classList.toggle('bg-indigo-500', idx === i);
+            d.classList.toggle('w-6', idx === i);
+            d.classList.toggle('bg-slate-300', idx !== i);
+            d.classList.toggle('dark:bg-slate-600', idx !== i);
+        });
+        prevBtn.disabled = i === 0;
+        nextBtn.disabled = i === QUESTIONS.length - 1;
+    }
+
+    prevBtn.addEventListener('click', () => { if (current > 0) render(current - 1); });
+    nextBtn.addEventListener('click', () => { if (current < QUESTIONS.length - 1) render(current + 1); });
+
+    function playIn() {
+        render(0);
+        if (!window.gsap) {
+            document.querySelectorAll('.header-section, .card-wrap, .nav-row').forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
+            return;
+        }
+        const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+        tl.to('.header-section', { opacity: 1, y: 0, duration: 0.7 })
+          .to('.card-wrap', { opacity: 1, duration: 0.6 }, '-=0.3')
+          .to('.nav-row', { opacity: 1, duration: 0.5 }, '-=0.3');
+
+        window.resetSlide = () => {
+            tl.pause(0);
+            gsap.set('.header-section, .card-wrap, .nav-row', { clearProps: 'all' });
+            render(0);
+            tl.restart();
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', playIn);
+</script>
+</body>
+</html>

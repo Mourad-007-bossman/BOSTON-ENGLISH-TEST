@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boston English Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui'] } } } };
+        (function applyInitialTheme() {
+            let useDark = false;
+            try { if (window.parent && window.parent !== window) useDark = window.parent.document.documentElement.classList.contains('dark'); } catch (e) {}
+            if (!useDark) {
+                const saved = localStorage.getItem('theme-preference');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                useDark = saved ? saved === 'dark' : prefersDark;
+            }
+            document.documentElement.classList.toggle('dark', useDark);
+        })();
+        window.setTheme = function setTheme(theme) {
+            const useDark = theme === 'dark';
+            document.documentElement.classList.toggle('dark', useDark);
+            localStorage.setItem('theme-preference', useDark ? 'dark' : 'light');
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        .chip { cursor: pointer; transition: all .15s ease; user-select: none; }
+        .chip:active { transform: scale(0.95); }
+        .answer-slot { min-height: 54px; }
+        .shake { animation: shake .4s ease; }
+        @keyframes shake { 0%,100%{transform:translateX(0);} 20%{transform:translateX(-6px);} 40%{transform:translateX(6px);} 60%{transform:translateX(-4px);} 80%{transform:translateX(4px);} }
+    </style>
+</head>
+<body class="h-full overflow-x-hidden">
+<div class="isolate relative min-h-[100dvh] overflow-x-hidden overflow-y-auto bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50">
+    <div class="pointer-events-none fixed inset-0 z-0">
+        <div class="absolute -top-28 -left-28 h-80 w-80 rounded-full bg-indigo-500/15 blur-3xl dark:bg-indigo-500/25"></div>
+        <div class="absolute -bottom-36 -right-28 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl dark:bg-cyan-500/20"></div>
+    </div>
+
+    <div class="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[760px] flex-col items-center justify-center gap-7 px-5 py-10">
+        <div class="header-section -translate-y-5 text-center opacity-0">
+            <span class="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.3em] text-indigo-500 dark:border-indigo-800/50 dark:bg-indigo-900/30 dark:text-indigo-400">
+                SLIDE 13 — PRACTICE
+            </span>
+            <h1 class="mt-4 mb-1 text-2xl font-black tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">Unscramble the Sentences</h1>
+            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Tap the words in the correct order to build each sentence.</p>
+        </div>
+
+        <div class="game-panel w-full rounded-[1.75rem] border border-slate-200 bg-white p-6 opacity-0 shadow-xl sm:p-8 dark:border-slate-700 dark:bg-slate-800">
+            <div class="mb-4 flex items-center justify-between">
+                <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-black text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">Sentence <span id="q-num">1</span> / <span id="q-total">7</span></span>
+                <span id="feedback" class="inline-flex items-center gap-1.5 text-sm font-black"></span>
+            </div>
+
+            <div id="answer-row" class="answer-slot mb-5 flex flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-3 dark:border-slate-600 dark:bg-slate-900/40"></div>
+
+            <div id="bank-row" class="mb-6 flex flex-wrap items-center gap-2"></div>
+
+            <div class="flex items-center gap-3">
+                <button id="check-btn" class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-indigo-500">Check</button>
+                <button id="clear-btn" class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-500 shadow-sm transition hover:text-indigo-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300">Clear</button>
+                <button id="next-btn" class="ml-auto hidden inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-500">
+                    Next
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SENTENCES = [
+        'This dish is too spicy.',
+        "There's a mistake with my order.",
+        'The chicken sandwich is too spicy.',
+        'The food is completely cold.',
+        'The steak is overcooked.',
+        'The steak is undercooked.',
+        'This is the wrong order.',
+    ];
+
+    let current = 0;
+    const answerRow = document.getElementById('answer-row');
+    const bankRow = document.getElementById('bank-row');
+    const feedback = document.getElementById('feedback');
+    const checkBtn = document.getElementById('check-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    document.getElementById('q-total').textContent = String(SENTENCES.length);
+
+    function shuffle(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    function makeChip(word) {
+        const chip = document.createElement('span');
+        chip.className = 'chip rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-bold text-indigo-700 shadow-sm dark:border-indigo-700/50 dark:bg-indigo-900/30 dark:text-indigo-200';
+        chip.textContent = word;
+        chip.dataset.word = word;
+        return chip;
+    }
+
+    function loadQuestion(i) {
+        current = i;
+        feedback.textContent = '';
+        nextBtn.classList.add('hidden');
+        checkBtn.disabled = false;
+        document.getElementById('q-num').textContent = String(i + 1);
+        answerRow.innerHTML = '';
+        bankRow.innerHTML = '';
+
+        const words = SENTENCES[i].split(' ');
+        shuffle(words).forEach(word => {
+            const chip = makeChip(word);
+            chip.addEventListener('click', () => {
+                answerRow.appendChild(chip);
+                checkRowEmpty();
+            });
+            bankRow.appendChild(chip);
+        });
+    }
+
+    function checkRowEmpty() {
+        if (bankRow.children.length === 0) {
+            
+        }
+    }
+
+    answerRow.addEventListener('click', (e) => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        bankRow.appendChild(chip);
+    });
+
+    checkBtn.addEventListener('click', () => {
+        const built = [...answerRow.children].map(c => c.dataset.word).join(' ');
+        const correct = built === SENTENCES[current];
+        if (correct) {
+            feedback.innerHTML = '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>Correct!';
+            feedback.className = 'inline-flex items-center gap-1.5 text-sm font-black text-emerald-600 dark:text-emerald-400';
+            [...answerRow.children].forEach(c => c.classList.add('!border-emerald-400', '!bg-emerald-50', '!text-emerald-700'));
+            nextBtn.classList.remove('hidden');
+        } else {
+            feedback.innerHTML = '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9.5 9.5 5 5m0-5-5 5"/></svg>Try again';
+            feedback.className = 'inline-flex items-center gap-1.5 text-sm font-black text-rose-600 dark:text-rose-400';
+            answerRow.classList.add('shake');
+            setTimeout(() => answerRow.classList.remove('shake'), 400);
+        }
+    });
+
+    clearBtn.addEventListener('click', () => {
+        [...answerRow.children].forEach(c => bankRow.appendChild(c));
+        feedback.textContent = '';
+    });
+
+    nextBtn.addEventListener('click', () => {
+        const next = (current + 1) % SENTENCES.length;
+        loadQuestion(next);
+    });
+
+    function playIn() {
+        loadQuestion(0);
+        if (!window.gsap) {
+            document.querySelectorAll('.header-section, .game-panel').forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
+            return;
+        }
+        const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+        tl.to('.header-section', { opacity: 1, y: 0, duration: 0.7 })
+          .to('.game-panel', { opacity: 1, duration: 0.6 }, '-=0.3');
+
+        window.resetSlide = () => {
+            tl.pause(0);
+            gsap.set('.header-section, .game-panel', { clearProps: 'all' });
+            loadQuestion(0);
+            tl.restart();
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', playIn);
+</script>
+</body>
+</html>

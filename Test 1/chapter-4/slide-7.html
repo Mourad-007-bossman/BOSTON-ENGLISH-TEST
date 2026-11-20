@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boston English Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui'] } } } };
+        (function applyInitialTheme() {
+            let useDark = false;
+            try { if (window.parent && window.parent !== window) useDark = window.parent.document.documentElement.classList.contains('dark'); } catch (e) {}
+            if (!useDark) {
+                const saved = localStorage.getItem('theme-preference');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                useDark = saved ? saved === 'dark' : prefersDark;
+            }
+            document.documentElement.classList.toggle('dark', useDark);
+        })();
+        window.setTheme = function setTheme(theme) {
+            const useDark = theme === 'dark';
+            document.documentElement.classList.toggle('dark', useDark);
+            localStorage.setItem('theme-preference', useDark ? 'dark' : 'light');
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        .opt-btn { cursor: pointer; transition: all .15s ease; }
+        .opt-btn.selected { outline: 2.5px solid #4f46e5; outline-offset: 1px; background: #eef2ff; }
+        .dark .opt-btn.selected { background: rgba(99,102,241,.2); }
+        .opt-btn.correct { outline: 2.5px solid #16a34a; background: #dcfce7 !important; }
+        .opt-btn.incorrect { outline: 2.5px solid #dc2626; background: #fee2e2 !important; }
+        .dark .opt-btn.correct { background: rgba(22,163,74,.25) !important; }
+        .dark .opt-btn.incorrect { background: rgba(220,38,38,.25) !important; }
+        input.q-input.correct { outline: 2.5px solid #16a34a; background: #dcfce7; }
+        input.q-input.incorrect { outline: 2.5px solid #dc2626; background: #fee2e2; }
+        .dark input.q-input.correct { background: rgba(22,163,74,.25); color:#fff; }
+        .dark input.q-input.incorrect { background: rgba(220,38,38,.25); color:#fff; }
+        .q-locked { pointer-events: none; }
+        .q-box.locked { opacity: .75; }
+    </style>
+</head>
+<body class="h-full overflow-x-hidden">
+<div class="isolate relative min-h-[100dvh] overflow-x-hidden overflow-y-auto bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50">
+    <div class="pointer-events-none fixed inset-0 z-0">
+        <div class="absolute -top-28 -left-28 h-80 w-80 rounded-full bg-indigo-500/15 blur-3xl dark:bg-indigo-500/25"></div>
+        <div class="absolute -bottom-36 -right-28 h-96 w-96 rounded-full bg-fuchsia-500/10 blur-3xl dark:bg-fuchsia-500/20"></div>
+    </div>
+
+    <div class="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[820px] flex-col gap-5 px-5 py-10">
+        <div class="header-section -translate-y-5 text-center opacity-0">
+            <span class="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.3em] text-indigo-500 dark:border-indigo-800/50 dark:bg-indigo-900/30 dark:text-indigo-400">
+                SLIDE 07 — WATCH AGAIN &amp; DO THE QUIZ
+            </span>
+            <h1 class="mt-4 mb-1 text-2xl font-black tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">Quick Quiz</h1>
+        </div>
+
+        <div class="quiz-body flex flex-col gap-5 opacity-0">
+            <div id="mcq-wrap" class="flex flex-col gap-4"></div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <p class="mb-3 text-xs font-black uppercase tracking-widest text-slate-400">Complete the Sentences</p>
+                <div id="fill-wrap" class="flex flex-col gap-3"></div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <p class="mb-3 text-xs font-black uppercase tracking-widest text-slate-400">True or False</p>
+                <div id="tf-wrap" class="flex flex-col gap-4"></div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4">
+                <button id="check-btn" class="rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500">Check Answers</button>
+                <button id="retry-btn" class="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-500 shadow-sm transition hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 9.3h5v-5M3 19.6v-5h5"/><path d="M3 10a8 8 0 0 1 13.8-5.5L21 9M3 14.9l4.2 4.5A8 8 0 0 0 21 14"/></svg>
+                    Start Over
+                </button>
+                <span id="score-out" class="text-sm font-black text-slate-600 dark:text-slate-300"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const MCQ = [
+        { q: 'What was wrong with the pasta?', options: ['It was too spicy', 'It was cold', 'It was expensive'], answer: 1 },
+        { q: 'What did the waiter offer the customer?', options: ['A dessert', 'A free drink', 'Another table'], answer: 1 },
+        { q: 'What happened at the end?', options: ['The customer left angry', 'The food stayed cold', 'The restaurant removed the dish from the bill'], answer: 2 },
+    ];
+    const FILL = [
+        { text: 'The chicken pasta was', answer: 'cold' },
+        { text: 'The waiter offered a free', answer: 'drink' },
+    ];
+    const TF = [
+        { q: 'The customer asked for a different dish.', answer: false },
+        { q: 'The waiter listened politely and solved the problem.', answer: true },
+    ];
+
+    const mcqWrap = document.getElementById('mcq-wrap');
+    const fillWrap = document.getElementById('fill-wrap');
+    const tfWrap = document.getElementById('tf-wrap');
+
+    const mcqState = new Array(MCQ.length).fill(null);
+    const tfState = new Array(TF.length).fill(null);
+    const mcqLocked = new Array(MCQ.length).fill(false);
+    const fillLocked = new Array(FILL.length).fill(false);
+    const tfLocked = new Array(TF.length).fill(false);
+    const TOTAL = MCQ.length + FILL.length + TF.length;
+    const checkBtn = document.getElementById('check-btn');
+    const scoreOut = document.getElementById('score-out');
+
+    function buildQuiz() {
+        mcqWrap.innerHTML = '';
+        fillWrap.innerHTML = '';
+        tfWrap.innerHTML = '';
+        mcqState.fill(null);
+        tfState.fill(null);
+        mcqLocked.fill(false);
+        fillLocked.fill(false);
+        tfLocked.fill(false);
+        checkBtn.classList.remove('hidden');
+        updateScoreDisplay();
+
+        MCQ.forEach((item, qi) => {
+            const box = document.createElement('div');
+            box.className = 'q-box rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800';
+            box.innerHTML = `<p class="mb-3 text-sm font-bold text-slate-800 dark:text-slate-100">${qi + 1}. ${item.q}</p>
+                <div class="flex flex-col gap-2" data-opts></div>`;
+            const optsEl = box.querySelector('[data-opts]');
+            item.options.forEach((opt, oi) => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-left text-sm font-semibold text-slate-600 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-300';
+                btn.textContent = opt;
+                btn.addEventListener('click', () => {
+                    if (mcqLocked[qi]) return;
+                    mcqState[qi] = oi;
+                    [...optsEl.children].forEach(c => c.classList.remove('selected', 'incorrect'));
+                    btn.classList.add('selected');
+                });
+                optsEl.appendChild(btn);
+            });
+            mcqWrap.appendChild(box);
+        });
+
+        FILL.forEach((item, fi) => {
+            const row = document.createElement('div');
+            row.className = 'flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200';
+            row.innerHTML = `<span>${fi + 3}. ${item.text}</span>
+                <input data-fill="${fi}" type="text" placeholder="type here" class="q-input w-36 rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm font-bold text-slate-800 outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100">
+                <span>.</span>`;
+            const input = row.querySelector('input');
+            input.addEventListener('input', () => input.classList.remove('incorrect'));
+            fillWrap.appendChild(row);
+        });
+
+        TF.forEach((item, ti) => {
+            const row = document.createElement('div');
+            row.className = 'flex flex-wrap items-center justify-between gap-3';
+            row.innerHTML = `<p class="text-sm font-bold text-slate-700 dark:text-slate-200">${ti + 5}. ${item.q}</p>
+                <div class="flex gap-2" data-tf="${ti}">
+                    <button data-val="true" class="opt-btn rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-black text-slate-600 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-300">True</button>
+                    <button data-val="false" class="opt-btn rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-black text-slate-600 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-300">False</button>
+                </div>`;
+            const group = row.querySelector('[data-tf]');
+            [...group.children].forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (tfLocked[ti]) return;
+                    tfState[ti] = btn.dataset.val === 'true';
+                    [...group.children].forEach(c => c.classList.remove('selected', 'incorrect'));
+                    btn.classList.add('selected');
+                });
+            });
+            tfWrap.appendChild(row);
+        });
+    }
+
+    function currentScore() {
+        return mcqLocked.filter(Boolean).length + fillLocked.filter(Boolean).length + tfLocked.filter(Boolean).length;
+    }
+
+    function updateScoreDisplay() {
+        const score = currentScore();
+        const allDone = score === TOTAL;
+        const star = '<svg class="inline h-4 w-4 -mt-0.5 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 16.9l-5.6 3.3 1.4-6.3-4.8-4.3 6.4-.6L12 2.5Z"/></svg>';
+        scoreOut.innerHTML = `Score: ${score} / ${TOTAL} ${allDone ? star : ''}`;
+        checkBtn.classList.toggle('hidden', allDone);
+    }
+
+    function checkAnswers() {
+        MCQ.forEach((item, qi) => {
+            if (mcqLocked[qi]) return;
+            const box = mcqWrap.children[qi];
+            const opts = box.querySelectorAll('.opt-btn');
+            if (mcqState[qi] === item.answer) {
+                opts[item.answer].classList.remove('selected');
+                opts[item.answer].classList.add('correct');
+                opts.forEach(o => o.classList.add('q-locked'));
+                box.classList.add('locked');
+                mcqLocked[qi] = true;
+            } else if (mcqState[qi] !== null) {
+                opts[mcqState[qi]].classList.remove('selected');
+                opts[mcqState[qi]].classList.add('incorrect');
+            }
+        });
+
+        FILL.forEach((item, fi) => {
+            if (fillLocked[fi]) return;
+            const input = fillWrap.querySelector(`[data-fill="${fi}"]`);
+            const ok = (input.value || '').trim().toLowerCase() === item.answer.toLowerCase();
+            if (ok) {
+                input.classList.add('correct');
+                input.disabled = true;
+                fillLocked[fi] = true;
+            } else {
+                input.classList.add('incorrect');
+            }
+        });
+
+        TF.forEach((item, ti) => {
+            if (tfLocked[ti]) return;
+            const group = tfWrap.querySelector(`[data-tf="${ti}"]`);
+            const correctBtn = [...group.children].find(b => (b.dataset.val === 'true') === item.answer);
+            if (tfState[ti] === item.answer) {
+                correctBtn.classList.remove('selected');
+                correctBtn.classList.add('correct');
+                [...group.children].forEach(b => b.classList.add('q-locked'));
+                tfLocked[ti] = true;
+            } else if (tfState[ti] !== null) {
+                const pickedBtn = [...group.children].find(b => (b.dataset.val === 'true') === tfState[ti]);
+                pickedBtn.classList.remove('selected');
+                pickedBtn.classList.add('incorrect');
+            }
+        });
+
+        updateScoreDisplay();
+    }
+
+    checkBtn.addEventListener('click', checkAnswers);
+    document.getElementById('retry-btn').addEventListener('click', buildQuiz);
+
+    function playIn() {
+        buildQuiz();
+        if (!window.gsap) {
+            document.querySelectorAll('.header-section, .quiz-body').forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
+            return;
+        }
+        const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+        tl.to('.header-section', { opacity: 1, y: 0, duration: 0.7 })
+          .to('.quiz-body', { opacity: 1, duration: 0.6 }, '-=0.3');
+
+        window.resetSlide = () => {
+            tl.pause(0);
+            gsap.set('.header-section, .quiz-body', { clearProps: 'all' });
+            buildQuiz();
+            tl.restart();
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', playIn);
+</script>
+</body>
+</html>

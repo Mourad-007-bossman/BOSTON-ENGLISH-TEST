@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boston English Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui'] } } } };
+        (function applyInitialTheme() {
+            let useDark = false;
+            try { if (window.parent && window.parent !== window) useDark = window.parent.document.documentElement.classList.contains('dark'); } catch (e) {}
+            if (!useDark) {
+                const saved = localStorage.getItem('theme-preference');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                useDark = saved ? saved === 'dark' : prefersDark;
+            }
+            document.documentElement.classList.toggle('dark', useDark);
+        })();
+        window.setTheme = function setTheme(theme) {
+            const useDark = theme === 'dark';
+            document.documentElement.classList.toggle('dark', useDark);
+            localStorage.setItem('theme-preference', useDark ? 'dark' : 'light');
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        .match-card { position: relative; transition: all .2s ease; border-width: 2px; user-select: none; -webkit-user-select: none; }
+        .match-card.solved { border-color: #10b981 !important; }
+        .match-card.wrong { animation: shake .35s ease; }
+        @keyframes shake { 0%,100%{transform:translateX(0);} 20%{transform:translateX(-6px);} 40%{transform:translateX(6px);} 60%{transform:translateX(-4px);} 80%{transform:translateX(4px);} }
+        .handle { position: absolute; top: 50%; width: 16px; height: 16px; margin-top: -8px; border-radius: 9999px; border: 2px solid #6366f1; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.15); touch-action: none; }
+        .dark .handle { background: #1e293b; }
+        .handle.start { right: -8px; cursor: grab; }
+        .handle.start:active { cursor: grabbing; }
+        .handle.end { left: -8px; border-color: #cbd5e1; }
+        .dark .handle.end { border-color: #475569; }
+        .match-card.solved .handle { border-color: #10b981; }
+        .match-card.solved .handle.start { cursor: default; }
+    </style>
+</head>
+<body class="h-full overflow-x-hidden">
+<div class="isolate relative min-h-[100dvh] overflow-x-hidden overflow-y-auto bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50">
+    <div class="pointer-events-none fixed inset-0 z-0">
+        <div class="absolute -top-28 -left-28 h-80 w-80 rounded-full bg-indigo-500/15 blur-3xl dark:bg-indigo-500/25"></div>
+        <div class="absolute -bottom-36 -right-28 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-500/20"></div>
+    </div>
+
+    <div class="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[900px] flex-col items-center gap-3 px-6 py-6">
+        <div class="header-section -translate-y-5 text-center opacity-0">
+            <span class="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.3em] text-indigo-500 dark:border-indigo-800/50 dark:bg-indigo-900/30 dark:text-indigo-400">
+                SLIDE 08 — PRACTICE
+            </span>
+            <h1 class="mt-3 mb-1 text-xl font-black tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">Match the Words with Their Definitions</h1>
+            <p class="text-xs font-semibold text-slate-500 sm:text-sm dark:text-slate-400">Drag from a word to its matching definition.</p>
+        </div>
+
+        <div class="score-row flex items-center gap-3 opacity-0">
+            <div class="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-black text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                Matched: <span id="score">0</span> / 5
+            </div>
+            <button id="reset-btn" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-black text-slate-500 shadow-sm transition hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 9.3h5v-5M3 19.6v-5h5"/><path d="M3 10a8 8 0 0 1 13.8-5.5L21 9M3 14.9l4.2 4.5A8 8 0 0 0 21 14"/></svg>
+                Reset
+            </button>
+        </div>
+
+        <div id="board-wrap" class="board-wrap relative w-full opacity-0">
+            <svg id="lines-svg" class="pointer-events-none absolute inset-0 h-full w-full overflow-visible">
+                <defs>
+                    <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1"></path>
+                    </marker>
+                </defs>
+                <g id="lines-group"></g>
+            </svg>
+            <div class="game-board grid w-full grid-cols-2 gap-6 sm:gap-8">
+                <div>
+                    <p class="mb-1.5 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 sm:text-xs">A — Word</p>
+                    <div id="col-words" class="flex flex-col gap-2 sm:gap-2.5"></div>
+                </div>
+                <div>
+                    <p class="mb-1.5 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 sm:text-xs">B — Definition</p>
+                    <div id="col-defs" class="flex flex-col gap-2 sm:gap-2.5"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="win-banner" class="win-banner hidden w-full max-w-lg rounded-3xl border-2 border-emerald-300 bg-emerald-50 p-6 text-center shadow-xl dark:border-emerald-700 dark:bg-emerald-900/30">
+            <svg class="mx-auto h-8 w-8 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>
+            <p class="mt-1 text-lg font-black text-emerald-700 dark:text-emerald-300">All matched! Nice work.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const PAIRS = [
+        { id: 1, word: 'undercooked', def: 'not cooked enough' },
+        { id: 2, word: 'chef', def: 'the main cook in a restaurant' },
+        { id: 3, word: 'patience', def: 'waiting calmly' },
+        { id: 4, word: 'offer', def: 'to give something' },
+        { id: 5, word: 'bill', def: 'the paper showing the total cost' },
+    ];
+
+    const colLeft = document.getElementById('col-words');
+    const colRight = document.getElementById('col-defs');
+    const scoreEl = document.getElementById('score');
+    const winBanner = document.getElementById('win-banner');
+    const boardWrap = document.getElementById('board-wrap');
+    const linesGroup = document.getElementById('lines-group');
+
+    const solvedIds = new Set();
+    let dragging = null;
+
+    function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+    function buildBoard() {
+        colLeft.innerHTML = '';
+        colRight.innerHTML = '';
+        linesGroup.innerHTML = '';
+        winBanner.classList.add('hidden');
+        solvedIds.clear();
+        dragging = null;
+        scoreEl.textContent = '0';
+
+        PAIRS.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'match-card rounded-xl border border-indigo-100 bg-white p-2 text-center text-[0.68rem] font-black capitalize text-indigo-600 shadow-sm sm:rounded-2xl sm:p-2.5 sm:text-[0.82rem] dark:border-indigo-900/40 dark:bg-slate-800 dark:text-indigo-300';
+            card.dataset.id = p.id;
+            card.dataset.side = 'left';
+            card.innerHTML = `<span class="pr-1">${p.word}</span><span class="handle start" data-id="${p.id}"></span>`;
+            colLeft.appendChild(card);
+        });
+
+        shuffle(PAIRS).forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'match-card rounded-xl border border-slate-200 bg-white p-2 text-[0.62rem] font-semibold leading-snug text-slate-600 shadow-sm sm:rounded-2xl sm:p-2.5 sm:text-[0.72rem] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300';
+            card.dataset.id = p.id;
+            card.dataset.side = 'right';
+            card.innerHTML = `<span class="handle end"></span>${p.def}`;
+            colRight.appendChild(card);
+        });
+
+        attachDragHandlers();
+    }
+
+    function handleCenter(cardEl, selector) {
+        const handle = cardEl.querySelector(selector);
+        const hRect = handle.getBoundingClientRect();
+        const wrapRect = boardWrap.getBoundingClientRect();
+        return { x: hRect.left + hRect.width / 2 - wrapRect.left, y: hRect.top + hRect.height / 2 - wrapRect.top };
+    }
+
+    function makeLine(x1, y1, x2, y2) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+        return line;
+    }
+
+    function drawPermanentLine(id) {
+        const leftCard = colLeft.querySelector(`.match-card[data-id="${id}"]`);
+        const rightCard = colRight.querySelector(`.match-card[data-id="${id}"]`);
+        const p1 = handleCenter(leftCard, '.handle.start');
+        const p2 = handleCenter(rightCard, '.handle.end');
+        const line = makeLine(p1.x, p1.y, p2.x, p2.y);
+        line.setAttribute('stroke', '#6366f1');
+        line.setAttribute('stroke-width', '2.5');
+        line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('marker-end', 'url(#arrowhead)');
+        line.dataset.lineId = id;
+        linesGroup.appendChild(line);
+    }
+
+    function redrawAllLines() {
+        linesGroup.innerHTML = '';
+        solvedIds.forEach(drawPermanentLine);
+    }
+
+    function flashWrong(rightCard, leftId) {
+        const leftCard = colLeft.querySelector(`.match-card[data-id="${leftId}"]`);
+        rightCard.classList.add('wrong');
+        leftCard.classList.add('wrong');
+        setTimeout(() => { rightCard.classList.remove('wrong'); leftCard.classList.remove('wrong'); }, 350);
+    }
+
+    function attachDragHandlers() {
+        colLeft.querySelectorAll('.handle.start').forEach(handle => {
+            handle.addEventListener('pointerdown', onPointerDown);
+        });
+    }
+
+    function onPointerDown(e) {
+        const id = Number(e.currentTarget.dataset.id);
+        if (solvedIds.has(id)) return;
+        e.preventDefault();
+        const leftCard = colLeft.querySelector(`.match-card[data-id="${id}"]`);
+        const start = handleCenter(leftCard, '.handle.start');
+        const temp = makeLine(start.x, start.y, start.x, start.y);
+        temp.setAttribute('stroke', '#94a3b8');
+        temp.setAttribute('stroke-width', '2');
+        temp.setAttribute('stroke-dasharray', '5 4');
+        temp.setAttribute('stroke-linecap', 'round');
+        linesGroup.appendChild(temp);
+        dragging = { id, temp };
+        e.currentTarget.setPointerCapture(e.pointerId);
+    }
+
+    function onPointerMove(e) {
+        if (!dragging) return;
+        const wrapRect = boardWrap.getBoundingClientRect();
+        dragging.temp.setAttribute('x2', e.clientX - wrapRect.left);
+        dragging.temp.setAttribute('y2', e.clientY - wrapRect.top);
+    }
+
+    function onPointerUp(e) {
+        if (!dragging) return;
+        const { id, temp } = dragging;
+        temp.remove();
+        dragging = null;
+
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const rightCard = el ? el.closest('.match-card[data-side="right"]') : null;
+        if (!rightCard) return;
+
+        const targetId = Number(rightCard.dataset.id);
+        if (solvedIds.has(targetId)) return;
+
+        if (targetId === id) {
+            solvedIds.add(id);
+            const leftCard = colLeft.querySelector(`.match-card[data-id="${id}"]`);
+            leftCard.classList.add('solved');
+            rightCard.classList.add('solved');
+            drawPermanentLine(id);
+            scoreEl.textContent = String(solvedIds.size);
+            if (solvedIds.size === PAIRS.length) {
+                winBanner.classList.remove('hidden');
+                if (window.gsap) gsap.fromTo(winBanner, { scale: .9, opacity: 0 }, { scale: 1, opacity: 1, duration: .5, ease: 'back.out(1.7)' });
+            }
+        } else {
+            flashWrong(rightCard, id);
+        }
+    }
+
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('resize', redrawAllLines);
+
+    document.getElementById('reset-btn').addEventListener('click', buildBoard);
+
+    function playIn() {
+        buildBoard();
+        if (!window.gsap) {
+            document.querySelectorAll('.header-section, .score-row, .board-wrap').forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
+            return;
+        }
+        const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+        tl.to('.header-section', { opacity: 1, y: 0, duration: 0.7 })
+          .to('.score-row', { opacity: 1, duration: 0.5 }, '-=0.3')
+          .to('.board-wrap', { opacity: 1, duration: 0.6 }, '-=0.2');
+
+        window.resetSlide = () => {
+            tl.pause(0);
+            gsap.set('.header-section, .score-row, .board-wrap', { clearProps: 'all' });
+            buildBoard();
+            tl.restart();
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', playIn);
+</script>
+</body>
+</html>

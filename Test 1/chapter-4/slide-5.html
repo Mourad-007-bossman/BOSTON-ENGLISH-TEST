@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boston English Center</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        
+        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui'] } } } };
+        
+        (function applyInitialTheme() {
+            let useDark = false;
+            try { if (window.parent && window.parent !== window) useDark = window.parent.document.documentElement.classList.contains('dark'); } catch (e) {}
+            if (!useDark) {
+                const saved = localStorage.getItem('theme-preference');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                useDark = saved ? saved === 'dark' : prefersDark;
+            }
+            document.documentElement.classList.toggle('dark', useDark);
+        })();
+        
+        window.setTheme = function setTheme(theme) {
+            const useDark = theme === 'dark';
+            document.documentElement.classList.toggle('dark', useDark);
+            localStorage.setItem('theme-preference', useDark ? 'dark' : 'light');
+        };
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        
+        .chat-scroll::-webkit-scrollbar { width: 6px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .chat-scroll::-webkit-scrollbar-thumb { background: #475569; }
+        .bubble-enter { animation: bubbleIn .35s ease both; }
+        @keyframes bubbleIn { 0%{opacity:0; transform: translateY(10px) scale(.96);} 100%{opacity:1; transform: translateY(0) scale(1);} }
+    </style>
+</head>
+
+<body class="h-full overflow-x-hidden">
+
+<div class="isolate relative min-h-[100dvh] overflow-x-hidden overflow-y-auto bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50">
+    
+    <div class="pointer-events-none fixed inset-0 z-0">
+        <div class="absolute -top-28 -left-28 h-80 w-80 rounded-full bg-indigo-500/15 blur-3xl dark:bg-indigo-500/25"></div>
+        <div class="absolute -bottom-36 -right-28 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-500/20"></div>
+    </div>
+
+    
+    <div class="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[780px] flex-col gap-5 px-5 py-8">
+        
+        <div class="header-section -translate-y-5 text-center opacity-0">
+            <span class="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.3em] text-indigo-500 dark:border-indigo-800/50 dark:bg-indigo-900/30 dark:text-indigo-400">
+                SLIDE 05 — LET'S WATCH THIS VIDEO
+            </span>
+            <h1 class="mt-4 mb-1 text-2xl font-black tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">Restaurant Complaints</h1>
+            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">The chicken pasta arrives cold — watch how the waiter handles it.</p>
+        </div>
+
+        
+        <div class="chat-panel flex flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white opacity-0 shadow-xl dark:border-slate-700 dark:bg-slate-800">
+            <div class="flex items-center justify-between border-b border-slate-100 px-5 py-3 dark:border-slate-700">
+                <div class="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400">
+                    
+                    <span class="flex h-2 w-2 rounded-full bg-rose-400"></span>
+                    <span class="flex h-2 w-2 rounded-full bg-amber-400"></span>
+                    <span class="flex h-2 w-2 rounded-full bg-emerald-400"></span>
+                    <span class="ml-2">Dialogue Player</span>
+                    <span id="progress-label" class="normal-case tracking-normal text-slate-300 dark:text-slate-500">0 / 17</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    
+                    <button id="play-btn" class="inline-flex items-center gap-1.5 rounded-full bg-indigo-600 px-4 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-indigo-500"></button>
+                    
+                    <button id="replay-btn" class="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 shadow-sm transition hover:text-indigo-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 9.3h5v-5M3 19.6v-5h5"/><path d="M3 10a8 8 0 0 1 13.8-5.5L21 9M3 14.9l4.2 4.5A8 8 0 0 0 21 14"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="h-1 w-full bg-slate-100 dark:bg-slate-700">
+                <div id="progress-bar" class="h-full bg-indigo-500 transition-[width] duration-300 ease-out" style="width: 0%"></div>
+            </div>
+            
+            <div id="chat-scroll" class="chat-scroll flex-1 space-y-3 overflow-y-auto px-5 py-5" style="max-height: 46vh; min-height: 260px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    
+    const LINES = [
+        { who: 'customer', text: 'Excuse me. Could I tell you something about my food?' },
+        { who: 'waiter', text: "Of course. What's the problem?" },
+        { who: 'customer', text: 'My chicken pasta is cold and the chicken looks a little undercooked.' },
+        { who: 'waiter', text: "I'm very sorry about that. That shouldn't happen. Let me take it back to the kitchen." },
+        { who: 'customer', text: 'Thank you.' },
+        { who: 'waiter', text: 'Would you like the same dish again or something different?' },
+        { who: 'customer', text: "The same dish is fine, but please make sure it's cooked well." },
+        { who: 'waiter', text: "No problem. I'll tell the chef. Thank you for your patience." },
+        { who: 'customer', text: 'Thanks for helping.' },
+        { who: 'waiter', text: 'While you wait, can I offer you a free drink? Maybe a soft drink or some water?' },
+        { who: 'customer', text: 'A glass of water would be great. Thank you.' },
+        { who: 'waiter', text: "Of course. I'll bring that right away." },
+        { who: 'waiter', text: "Here is your new chicken pasta. Could you check if it's okay now?" },
+        { who: 'customer', text: "Yes, it's hot and tastes good now." },
+        { who: 'waiter', text: 'Wonderful. We also removed it from your bill.' },
+        { who: 'customer', text: 'Oh, thank you very much.' },
+        { who: 'waiter', text: "You're welcome. Enjoy the rest of your meal." },
+    ];
+
+    
+    const chatScroll = document.getElementById('chat-scroll');
+    const playBtn = document.getElementById('play-btn');
+    const replayBtn = document.getElementById('replay-btn');
+    const progressBar = document.getElementById('progress-bar');
+    const progressLabel = document.getElementById('progress-label');
+
+    
+    let idx = 0;
+    let timer = null;
+    let playing = false;
+
+    
+    progressLabel.textContent = `0 / ${LINES.length}`;
+
+    
+    const ICON_PLAY = '<svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7Z"/></svg>';
+    const ICON_PAUSE = '<svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+    const ICON_USER = '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>';
+
+    
+    function setPlayBtn(icon, label) {
+        playBtn.innerHTML = `${icon}<span>${label}</span>`;
+    }
+
+    
+    
+    function paceFor(text) {
+        const words = text.trim().split(/\s+/).length;
+        return Math.min(3200, Math.max(1100, 650 + words * 160));
+    }
+
+    
+    function bubbleHTML(line) {
+        const isWaiter = line.who === 'waiter';
+        const label = isWaiter ? 'Waiter' : 'Customer';
+        const avatarColor = isWaiter ? 'bg-indigo-500' : 'bg-amber-500';
+        const bubbleColor = isWaiter ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-100';
+        const align = isWaiter ? 'flex-row-reverse' : 'flex-row';
+        const textAlign = isWaiter ? 'text-right items-end' : 'text-left items-start';
+        return `
+            <div class="bubble-enter flex ${align} items-end gap-2.5">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${avatarColor} text-white shadow-sm">${ICON_USER}</div>
+                <div class="flex max-w-[75%] flex-col ${textAlign}">
+                    <span class="mb-1 px-1 text-[10px] font-black uppercase tracking-wider text-slate-400">${label}</span>
+                    <div class="rounded-2xl ${bubbleColor} px-4 py-2.5 text-sm font-semibold leading-snug shadow-sm">${line.text}</div>
+                </div>
+            </div>`;
+    }
+
+    
+    function updateProgress() {
+        progressBar.style.width = `${Math.round((idx / LINES.length) * 100)}%`;
+        progressLabel.textContent = `${idx} / ${LINES.length}`;
+    }
+
+    
+    function appendNext() {
+        if (idx >= LINES.length) return;
+        const div = document.createElement('div');
+        div.innerHTML = bubbleHTML(LINES[idx]);
+        chatScroll.appendChild(div.firstElementChild);
+        chatScroll.scrollTop = chatScroll.scrollHeight;
+        idx++;
+        updateProgress();
+    }
+
+    
+    function scheduleNext() {
+        if (!playing || idx >= LINES.length) { stopPlaying(); return; }
+        const line = LINES[idx];
+        appendNext();
+        if (idx >= LINES.length) { stopPlaying(); return; }
+        timer = setTimeout(scheduleNext, paceFor(line.text));
+    }
+
+    
+    function stopPlaying() {
+        playing = false;
+        clearTimeout(timer);
+        timer = null;
+        setPlayBtn(ICON_PLAY, idx >= LINES.length ? 'Replay' : 'Play');
+    }
+
+    
+    function startPlaying() {
+        if (idx >= LINES.length) resetChat();
+        playing = true;
+        setPlayBtn(ICON_PAUSE, 'Pause');
+        scheduleNext();
+    }
+
+    
+    function resetChat() {
+        clearTimeout(timer);
+        timer = null;
+        playing = false;
+        idx = 0;
+        chatScroll.innerHTML = '';
+        setPlayBtn(ICON_PLAY, 'Play');
+        updateProgress();
+    }
+
+    
+    playBtn.addEventListener('click', () => { playing ? stopPlaying() : startPlaying(); });
+    replayBtn.addEventListener('click', () => { resetChat(); startPlaying(); });
+
+    
+    window.stopSlideAudio = function () { stopPlaying(); };
+
+    
+    function playIn() {
+        resetChat();
+        
+        if (!window.gsap) {
+            document.querySelectorAll('.header-section, .chat-panel').forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
+            return;
+        }
+        const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+        tl.to('.header-section', { opacity: 1, y: 0, duration: 0.7 })
+          .to('.chat-panel', { opacity: 1, duration: 0.6 }, '-=0.3');
+
+        
+        window.resetSlide = () => {
+            tl.pause(0);
+            gsap.set('.header-section, .chat-panel', { clearProps: 'all' });
+            resetChat();
+            tl.restart();
+        };
+    }
+
+    
+    document.addEventListener('DOMContentLoaded', playIn);
+</script>
+</body>
+</html>

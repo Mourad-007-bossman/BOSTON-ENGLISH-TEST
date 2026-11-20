@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boston English Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui'] } } } };
+        (function applyInitialTheme() {
+            let useDark = false;
+            try { if (window.parent && window.parent !== window) useDark = window.parent.document.documentElement.classList.contains('dark'); } catch (e) {}
+            if (!useDark) {
+                const saved = localStorage.getItem('theme-preference');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                useDark = saved ? saved === 'dark' : prefersDark;
+            }
+            document.documentElement.classList.toggle('dark', useDark);
+        })();
+        window.setTheme = function setTheme(theme) {
+            const useDark = theme === 'dark';
+            document.documentElement.classList.toggle('dark', useDark);
+            localStorage.setItem('theme-preference', useDark ? 'dark' : 'light');
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        .chip { cursor: pointer; transition: all .15s ease; user-select: none; }
+        .chip.selected { outline: 3px solid #4f46e5; outline-offset: 2px; transform: translateY(-2px); }
+        .group-box { transition: all .15s ease; cursor: pointer; min-height: 120px; }
+        .group-box.flash { outline: 3px solid #4f46e5; }
+        .shake { animation: shake .4s ease; }
+        @keyframes shake { 0%,100%{transform:translateX(0);} 20%{transform:translateX(-6px);} 40%{transform:translateX(6px);} 60%{transform:translateX(-4px);} 80%{transform:translateX(4px);} }
+    </style>
+</head>
+<body class="h-full overflow-x-hidden">
+<div class="isolate relative min-h-[100dvh] overflow-x-hidden overflow-y-auto bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50">
+    <div class="pointer-events-none fixed inset-0 z-0">
+        <div class="absolute -top-28 -left-28 h-80 w-80 rounded-full bg-indigo-500/15 blur-3xl dark:bg-indigo-500/25"></div>
+        <div class="absolute -bottom-36 -right-28 h-96 w-96 rounded-full bg-violet-500/10 blur-3xl dark:bg-violet-500/20"></div>
+    </div>
+
+    <div class="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[1000px] flex-col items-center gap-5 px-5 py-10">
+        <div class="header-section -translate-y-5 text-center opacity-0">
+            <span class="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.3em] text-indigo-500 dark:border-indigo-800/50 dark:bg-indigo-900/30 dark:text-indigo-400">
+                SLIDE 14 — PRACTICE
+            </span>
+            <h1 class="mt-4 mb-1 text-2xl font-black tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">Sort the Sentences into the Right Group</h1>
+            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Tap a phrase, then tap the group it belongs to.</p>
+        </div>
+
+        <div class="score-row flex items-center gap-3 opacity-0">
+            <div class="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-black text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                Sorted: <span id="score">0</span> / 9
+            </div>
+            <button id="reset-btn" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-black text-slate-500 shadow-sm transition hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 9.3h5v-5M3 19.6v-5h5"/><path d="M3 10a8 8 0 0 1 13.8-5.5L21 9M3 14.9l4.2 4.5A8 8 0 0 0 21 14"/></svg>
+                Reset
+            </button>
+        </div>
+
+        <div id="pool" class="pool-row flex min-h-[48px] flex-wrap items-center justify-center gap-2 opacity-0"></div>
+
+        <div class="groups-grid grid w-full grid-cols-1 gap-4 opacity-0 sm:grid-cols-2">
+            <div class="group-box rounded-2xl border-2 border-sky-200 bg-sky-50 p-4 dark:border-sky-800/50 dark:bg-sky-900/20" data-group="explain">
+                <p class="mb-2 text-center text-xs font-black uppercase tracking-wider text-sky-600 dark:text-sky-300">Explaining the Problem</p>
+                <div class="placed flex flex-wrap justify-center gap-2"></div>
+            </div>
+            <div class="group-box rounded-2xl border-2 border-amber-200 bg-amber-50 p-4 dark:border-amber-800/50 dark:bg-amber-900/20" data-group="request">
+                <p class="mb-2 text-center text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-300">Making a Request</p>
+                <div class="placed flex flex-wrap justify-center gap-2"></div>
+            </div>
+            <div class="group-box rounded-2xl border-2 border-blue-200 bg-blue-50 p-4 dark:border-blue-800/50 dark:bg-blue-900/20" data-group="responding">
+                <p class="mb-2 text-center text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-300">Responding to the Apology</p>
+                <div class="placed flex flex-wrap justify-center gap-2"></div>
+            </div>
+            <div class="group-box rounded-2xl border-2 border-purple-200 bg-purple-50 p-4 dark:border-purple-800/50 dark:bg-purple-900/20" data-group="apology">
+                <p class="mb-2 text-center text-xs font-black uppercase tracking-wider text-purple-600 dark:text-purple-300">Making an Apology</p>
+                <div class="placed flex flex-wrap justify-center gap-2"></div>
+            </div>
+        </div>
+
+        <div id="win-banner" class="win-banner hidden w-full max-w-lg rounded-3xl border-2 border-emerald-300 bg-emerald-50 p-6 text-center shadow-xl dark:border-emerald-700 dark:bg-emerald-900/30">
+            <svg class="mx-auto h-8 w-8 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 16.9l-5.6 3.3 1.4-6.3-4.8-4.3 6.4-.6L12 2.5Z"/></svg>
+            <p class="mt-1 text-lg font-black text-emerald-700 dark:text-emerald-300">All sentences sorted correctly!</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ITEMS = [
+        { id: 1, text: 'There seems to be a mistake', group: 'explain' },
+        { id: 2, text: "I'm afraid I can't eat this.", group: 'explain' },
+        { id: 3, text: 'Would you mind waiting?', group: 'request' },
+        { id: 4, text: 'Could you possibly bring me a cloth?', group: 'request' },
+        { id: 5, text: "I'd like to order something else, please.", group: 'request' },
+        { id: 6, text: "It's not your fault.", group: 'responding' },
+        { id: 7, text: "Don't worry about it.", group: 'responding' },
+        { id: 8, text: "I'm terribly sorry.", group: 'apology' },
+        { id: 9, text: 'I do apologize.', group: 'apology' },
+    ];
+
+    const pool = document.getElementById('pool');
+    const groupBoxes = [...document.querySelectorAll('.group-box')];
+    const scoreEl = document.getElementById('score');
+    const winBanner = document.getElementById('win-banner');
+
+    let selected = null;
+    let solvedCount = 0;
+
+    function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+    function buildBoard() {
+        pool.innerHTML = '';
+        groupBoxes.forEach(g => g.querySelector('.placed').innerHTML = '');
+        winBanner.classList.add('hidden');
+        selected = null;
+        solvedCount = 0;
+        scoreEl.textContent = '0';
+
+        shuffle(ITEMS).forEach(item => {
+            const chip = document.createElement('span');
+            chip.className = 'chip rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-700 shadow-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200';
+            chip.textContent = item.text;
+            chip.dataset.id = item.id;
+            chip.addEventListener('click', () => {
+                [...pool.children].forEach(c => c.classList.remove('selected'));
+                chip.classList.add('selected');
+                selected = item;
+            });
+            pool.appendChild(chip);
+        });
+    }
+
+    groupBoxes.forEach(box => {
+        box.addEventListener('click', () => {
+            if (!selected) return;
+            const chip = [...pool.children].find(c => Number(c.dataset.id) === selected.id);
+            if (!chip) return;
+
+            if (selected.group === box.dataset.group) {
+                chip.classList.remove('selected');
+                chip.classList.add('!border-emerald-400', '!bg-emerald-50', '!text-emerald-700', 'dark:!bg-emerald-900/30', 'dark:!text-emerald-300');
+                box.querySelector('.placed').appendChild(chip);
+                solvedCount++;
+                scoreEl.textContent = String(solvedCount);
+                selected = null;
+                if (solvedCount === ITEMS.length) {
+                    winBanner.classList.remove('hidden');
+                    if (window.gsap) gsap.fromTo(winBanner, { scale: .9, opacity: 0 }, { scale: 1, opacity: 1, duration: .5, ease: 'back.out(1.7)' });
+                }
+            } else {
+                box.classList.add('shake');
+                setTimeout(() => box.classList.remove('shake'), 400);
+            }
+        });
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', buildBoard);
+
+    function playIn() {
+        buildBoard();
+        if (!window.gsap) {
+            document.querySelectorAll('.header-section, .score-row, .pool-row, .groups-grid').forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
+            return;
+        }
+        const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+        tl.to('.header-section', { opacity: 1, y: 0, duration: 0.7 })
+          .to('.score-row', { opacity: 1, duration: 0.4 }, '-=0.3')
+          .to('.pool-row', { opacity: 1, duration: 0.5 }, '-=0.2')
+          .to('.groups-grid', { opacity: 1, duration: 0.5 }, '-=0.2');
+
+        window.resetSlide = () => {
+            tl.pause(0);
+            gsap.set('.header-section, .score-row, .pool-row, .groups-grid', { clearProps: 'all' });
+            buildBoard();
+            tl.restart();
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', playIn);
+</script>
+</body>
+</html>

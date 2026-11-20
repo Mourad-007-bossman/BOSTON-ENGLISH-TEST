@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boston English Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui'] } } } };
+        (function applyInitialTheme() {
+            let useDark = false;
+            try { if (window.parent && window.parent !== window) useDark = window.parent.document.documentElement.classList.contains('dark'); } catch (e) {}
+            if (!useDark) {
+                const saved = localStorage.getItem('theme-preference');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                useDark = saved ? saved === 'dark' : prefersDark;
+            }
+            document.documentElement.classList.toggle('dark', useDark);
+        })();
+        window.setTheme = function setTheme(theme) {
+            const useDark = theme === 'dark';
+            document.documentElement.classList.toggle('dark', useDark);
+            localStorage.setItem('theme-preference', useDark ? 'dark' : 'light');
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body class="h-full overflow-x-hidden">
+<div class="isolate relative min-h-[100dvh] overflow-x-hidden overflow-y-auto bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50">
+    <div class="pointer-events-none fixed inset-0 z-0">
+        <div class="absolute -top-28 -left-28 h-80 w-80 rounded-full bg-indigo-500/15 blur-3xl dark:bg-indigo-500/25"></div>
+        <div class="absolute -bottom-36 -right-28 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-500/20"></div>
+    </div>
+
+    <div class="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[900px] flex-col items-center justify-center gap-10 px-6 py-12">
+        <div class="header-section -translate-y-5 text-center opacity-0">
+            <span class="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.3em] text-indigo-500 dark:border-indigo-800/50 dark:bg-indigo-900/30 dark:text-indigo-400">
+                SLIDE 02 — LEARNING OBJECTIVES
+            </span>
+            <h1 class="mt-6 mb-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl md:text-5xl dark:text-slate-100">
+                By the end of the lesson,<br class="hidden sm:block"> you will be able to:
+            </h1>
+        </div>
+
+        <div id="obj-list" class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    const ICONS = {
+        chat: '<svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="12" rx="2.5"/><path d="M9 16 7 20 12 16Z" fill="currentColor" stroke="none"/></svg>',
+        smile: '<svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14c1.2 1.3 2.6 2 4 2s2.8-.7 4-2"/><circle cx="9" cy="10" r=".75" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r=".75" fill="currentColor" stroke="none"/></svg>',
+        question: '<svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7v.3"/><path d="M12 17h.01"/></svg>',
+        clipboard: '<svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 11h6M9 15h6"/></svg>',
+        users: '<svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 20c0-3.6 2.5-6.5 5.5-6.5s5.5 2.9 5.5 6.5"/><circle cx="17" cy="9" r="2.3"/><path d="M15.3 14.3c2.6.5 4.2 2.7 4.2 5.7"/></svg>',
+    };
+
+    const OBJECTIVES = [
+        { icon: ICONS.chat, text: 'Describe problems with products or services' },
+        { icon: ICONS.smile, text: 'Make complaints politely in shops or restaurants' },
+        { icon: ICONS.question, text: 'Ask for help or solutions' },
+        { icon: ICONS.clipboard, text: 'Use customer service vocabulary' },
+        { icon: ICONS.users, text: 'Role-play customer complaint situations' },
+    ];
+
+    const list = document.getElementById('obj-list');
+    OBJECTIVES.forEach((o, i) => {
+        const el = document.createElement('div');
+        el.className = `obj-card ${i === OBJECTIVES.length - 1 && OBJECTIVES.length % 2 !== 0 ? 'sm:col-span-2' : ''} flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 opacity-0 shadow-sm dark:border-slate-700 dark:bg-slate-800`;
+        el.innerHTML = `
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-500 dark:bg-indigo-900/30 dark:text-indigo-400">${o.icon}</div>
+            <p class="text-sm font-bold leading-snug text-slate-700 sm:text-base dark:text-slate-200">${o.text}</p>
+            <div class="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </div>`;
+        list.appendChild(el);
+    });
+
+    function playIn() {
+        if (!window.gsap) {
+            document.querySelectorAll('.header-section, .obj-card').forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
+            return;
+        }
+        const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+        tl.to('.header-section', { opacity: 1, y: 0, duration: 0.8 })
+          .to('.obj-card', { opacity: 1, y: 0, duration: 0.6, stagger: 0.12, clearProps: 'transform' }, '-=0.3');
+
+        window.resetSlide = () => {
+            tl.pause(0);
+            gsap.set('.header-section, .obj-card', { clearProps: 'all' });
+            tl.restart();
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', playIn);
+</script>
+</body>
+</html>
